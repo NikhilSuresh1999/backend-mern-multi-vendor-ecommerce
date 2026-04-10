@@ -6,7 +6,7 @@ const { responseReturn } = require('../../utiles/response')
 const { mongo: {ObjectId}} = require('mongoose')
 const myShopWallet = require('../../models/myShopWallet')
 const sellerWallet = require('../../models/sellerWallet')
-const stripe = require('stripe')('REMOVED')
+const stripe = require('stripe')(process.env.STRIPE_SECRET_KEY)
 
 
 class orderController {

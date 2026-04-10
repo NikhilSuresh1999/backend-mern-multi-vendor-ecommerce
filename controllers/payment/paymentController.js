@@ -5,7 +5,7 @@ const sellerModel = require('../../models/sellerModel')
 const sellerWallet = require('../../models/sellerWallet')
 const withdrowRequest = require('../../models/withdrowRequest')
 const { mongo: {ObjectId}} = require('mongoose')
-const stripe = require('stripe')('REMOVED')
+const stripe = require('stripe')(process.env.STRIPE_SECRET_KEY)
 
 class paymentController{
 
