@@ -1,33 +1,98 @@
-const stripeModel = require('../../models/stripeModel')
-const {v4: uuidv4} = require('uuid')
-const { responseReturn } = require('../../utiles/response')
-const sellerModel = require('../../models/sellerModel')
-const sellerWallet = require('../../models/sellerWallet')
-const withdrowRequest = require('../../models/withdrowRequest')
-const { mongo: {ObjectId}} = require('mongoose')
-const stripe = require('stripe')(process.env.STRIPE_SECRET_KEY)
+// const stripeModel = require('../../models/stripeModel')
+// const {v4: uuidv4} = require('uuid')
+// const { responseReturn } = require('../../utiles/response')
+// const sellerModel = require('../../models/sellerModel')
+// const sellerWallet = require('../../models/sellerWallet')
+// const withdrowRequest = require('../../models/withdrowRequest')
+// const { mongo: {ObjectId}} = require('mongoose')
+// const stripe = require('stripe')(process.env.STRIPE_SECRET_KEY)
 
-class paymentController{
+// class paymentController{
 
-//     create_stripe_connect_account = async(req,res) => {
-//         // console.log('test data')
-//         // console.log(req.id)
-//        const {id} = req 
-//        const uid = uuidv4()
+// //     create_stripe_connect_account = async(req,res) => {
+// //         // console.log('test data')
+// //         // console.log(req.id)
+// //        const {id} = req 
+// //        const uid = uuidv4()
 
-//     try {
+// //     try {
+// //         const stripeInfo = await stripeModel.findOne({ sellerId: id  })
+
+// //         if (stripeInfo) {
+// //             await stripeModel.deleteOne({ sellerId: id })
+// //             //const account = await stripe.accounts.create({ type: 'express' }) 
+// //            const account = await stripe.accounts.create({
+// //   type: 'express',
+// //   capabilities: {
+// //     transfers: { requested: true }
+// //   }
+// // })   
+          
+
+// //             const accountLink = await stripe.accountLinks.create({
+// //                 account: account.id,
+// //                 refresh_url: 'http://localhost:3001/refresh',
+// //                 return_url:  `http://localhost:3001/success?activeCode=${uid}`,
+// //                 type: 'account_onboarding'
+// //             })
+// //             await stripeModel.create({
+// //                 sellerId: id,
+// //                 stripeId: account.id,
+// //                 code: uid
+// //             })
+// //             console.log(accountLink.url)
+// //             responseReturn(res,201,{url:accountLink.url })
+
+// //         }else{
+// //             const account = await stripe.accounts.create({ type: 'express' }) 
+
+// //             const accountLink = await stripe.accountLinks.create({
+// //                 account: account.id,
+// //                 refresh_url: 'http://localhost:3001/refresh',
+// //                 return_url:  `http://localhost:3001/success?activeCode=${uid}`,
+// //                 type: 'account_onboarding'
+// //             })
+// //             await stripeModel.create({
+// //                 sellerId: id,
+// //                 stripeId: account.id,
+// //                 code: uid
+// //             })
+// //             responseReturn(res,201,{url:accountLink.url })
+
+// //         }
+        
+// //     } catch (error) {
+// //         console.log('strpe connect account errror' + error.message)
+// //      }
+// //     }
+// //     // End Method 
+
+
+// create_stripe_connect_account = async(req,res) => {
+//    const {id} = req 
+//    const uid = uuidv4()
+
+//    try {
 //         const stripeInfo = await stripeModel.findOne({ sellerId: id  })
 
 //         if (stripeInfo) {
+
+//             // 🔥 DELETE OLD STRIPE ACCOUNT (ADDED)
+//             try {
+//                 await stripe.accounts.del(stripeInfo.stripeId)
+//             } catch (err) {
+//                 console.log('Stripe delete error:', err.message)
+//             }
+
 //             await stripeModel.deleteOne({ sellerId: id })
-//             //const account = await stripe.accounts.create({ type: 'express' }) 
-//            const account = await stripe.accounts.create({
-//   type: 'express',
-//   capabilities: {
-//     transfers: { requested: true }
-//   }
-// })   
-          
+
+//             // ✅ FIXED (capability added)
+//             const account = await stripe.accounts.create({
+//                 type: 'express',
+//                 capabilities: {
+//                     transfers: { requested: true }
+//                 }
+//             })
 
 //             const accountLink = await stripe.accountLinks.create({
 //                 account: account.id,
@@ -35,16 +100,25 @@ class paymentController{
 //                 return_url:  `http://localhost:3001/success?activeCode=${uid}`,
 //                 type: 'account_onboarding'
 //             })
+
 //             await stripeModel.create({
 //                 sellerId: id,
 //                 stripeId: account.id,
 //                 code: uid
 //             })
+
 //             console.log(accountLink.url)
 //             responseReturn(res,201,{url:accountLink.url })
 
-//         }else{
-//             const account = await stripe.accounts.create({ type: 'express' }) 
+//         } else {
+
+//             // ✅ FIXED (IMPORTANT: capability also added here)
+//             const account = await stripe.accounts.create({
+//                 type: 'express',
+//                 capabilities: {
+//                     transfers: { requested: true }
+//                 }
+//             })
 
 //             const accountLink = await stripe.accountLinks.create({
 //                 account: account.id,
@@ -52,294 +126,461 @@ class paymentController{
 //                 return_url:  `http://localhost:3001/success?activeCode=${uid}`,
 //                 type: 'account_onboarding'
 //             })
+
 //             await stripeModel.create({
 //                 sellerId: id,
 //                 stripeId: account.id,
 //                 code: uid
 //             })
+//             console.log(" url is " + account.url)
 //             responseReturn(res,201,{url:accountLink.url })
-
 //         }
         
 //     } catch (error) {
-//         console.log('strpe connect account errror' + error.message)
-//      }
+//         console.log('stripe connect account error ' + error.message)
+//     }
+// }
+
+
+// //end method
+
+// delete_stripe_account = async (req, res) => {
+//     const { id } = req
+
+//     try {
+//         const stripeInfo = await stripeModel.findOne({ sellerId: id })
+
+//         if (!stripeInfo) {
+//             return responseReturn(res, 404, { message: 'No Stripe account found' })
+//         }
+
+//         // 🔥 Try deleting from Stripe
+//         try {
+//             await stripe.accounts.del(stripeInfo.stripeId)
+//         } catch (err) {
+//             console.log("Stripe delete error:", err.message)
+//         }
+
+//         // 🔥 Always delete from DB
+//         await stripeModel.deleteOne({ sellerId: id })
+
+//         await sellerModel.findByIdAndUpdate(id, {
+//             payment: 'inactive'
+//         })
+
+//         return responseReturn(res, 200, {
+//             message: 'Stripe account deleted successfully'
+//         })
+
+//     } catch (error) {
+//         console.log("Delete error:", error.message)
+//         return responseReturn(res, 500, {
+//             message: 'Delete failed'
+//         })
+//     }
+// }
+
+
+// //end method
+
+//      active_stripe_connect_account = async (req, res) => {
+//        const {activeCode} = req.params 
+//        const {id} = req
+
+//        try {
+//             const userStripeInfo = await stripeModel.findOne({ code: activeCode })
+
+//             if (userStripeInfo) {
+//                 await sellerModel.findByIdAndUpdate(id,{  
+//                   payment: 'active'
+//                 })
+//                 responseReturn(res, 200, {message: 'payment Active'})
+//             } else {
+//                 responseReturn(res, 404, {message: 'payment Active Fails'})
+//             } 
+
+//        } catch (error) {
+//         responseReturn(res, 500, {message: 'Internal Server Error'})
+//        } 
+
+//     }
+//       // End Method 
+
+
+//     sumAmount = (data) => {
+//         let sum = 0;
+//         for (let i = 0; i < data.length; i++) {
+//             sum = sum + data[i].amount;            
+//         }
+//         return sum
+//     }  
+
+
+//     //end method
+
+
+//     get_seller_payment_details = async (req, res) => {
+//     const {sellerId} = req.params
+    
+//     try {
+//         const payments = await sellerWallet.find({ sellerId }) 
+        
+//     const pendingWithdrows = await withdrowRequest.find({
+//             $and: [
+//                 {
+//                     sellerId: {
+//                         $eq: sellerId
+//                     }
+//                 },
+//                 {
+//                     status: {
+//                         $eq: 'pending'
+//                     }
+//                 }
+//             ]
+//         })
+
+//         const successWithdrows = await withdrowRequest.find({
+//             $and: [
+//                 {
+//                     sellerId: {
+//                         $eq: sellerId
+//                     }
+//                 },
+//                 {
+//                     status: {
+//                         $eq: 'success'
+//                     }
+//                 }
+//             ]
+//         })
+
+//         const pendingAmount = this.sumAmount(pendingWithdrows)
+//         const withdrowAmount = this.sumAmount(successWithdrows)
+//         const totalAmount = this.sumAmount(payments)
+
+//         let availableAmount = 0;
+
+//        // console.log("payment method called")
+
+//         if (totalAmount > 0) {
+//             availableAmount = totalAmount - (pendingAmount + withdrowAmount)
+//         }
+
+//         responseReturn(res, 200,{
+//             totalAmount,
+//             pendingAmount,
+//             withdrowAmount,
+//             availableAmount,
+//             pendingWithdrows,
+//             successWithdrows 
+//         })
+        
+//     } catch (error) {
+//         console.log(error.message)
+//     } 
+
 //     }
 //     // End Method 
 
 
-create_stripe_connect_account = async(req,res) => {
-   const {id} = req 
-   const uid = uuidv4()
+//     withdrowal_request = async (req, res) => {
+//         const {amount,sellerId} = req.body
 
-   try {
-        const stripeInfo = await stripeModel.findOne({ sellerId: id  })
+//         try {
+//             const withdrowal = await withdrowRequest.create({
+//                 sellerId,
+//                 amount: parseInt(amount)
+//             })
+//             responseReturn(res, 200,{ withdrowal, message: 'Withdrowal Request Send'})
+//         } catch (error) {
+//             responseReturn(res, 500,{ message: 'Internal Server Error'})
+//         }
+//     }
+//   // End Method 
 
-        if (stripeInfo) {
 
-            // 🔥 DELETE OLD STRIPE ACCOUNT (ADDED)
-            try {
-                await stripe.accounts.del(stripeInfo.stripeId)
-            } catch (err) {
-                console.log('Stripe delete error:', err.message)
+//   get_payment_request = async (req, res) => {
+//     try {
+//         const withdrowalRequest = await withdrowRequest.find({ status: 'pending'})
+//         responseReturn(res, 200, {withdrowalRequest })
+//     } catch (error) {
+//         responseReturn(res, 500,{ message: 'Internal Server Error'})
+//     }
+//   }
+//     // End Method 
+
+//     payment_request_confirm = async (req, res) => {
+//         const {paymentId} = req.body 
+//         try {
+//             const payment = await withdrowRequest.findById(paymentId)
+//             const {stripeId} = await stripeModel.findOne({
+//                 sellerId: new ObjectId(payment.sellerId)
+//             })
+
+//             // await stripe.transfers.create({
+//             //     amount: payment.amount * 100,
+//             //     currency: 'usd',
+//             //     destination: stripeId
+//             // })
+             
+//             await withdrowRequest.findByIdAndUpdate(paymentId, {status: 'success'})
+//             responseReturn(res, 200, {payment, message: 'Request Confirm Success'})
+
+//         } catch (error) { 
+//             console.log(error)
+//             responseReturn(res, 500,{ message: 'Internal Server Error'})
+//         }
+//     }
+//   // End Method
+
+
+
+// }
+
+
+// module.exports = new paymentController()
+
+
+const stripeModel = require('../../models/stripeModel');
+const { v4: uuidv4 } = require('uuid');
+const { responseReturn } = require('../../utiles/response');
+const sellerModel = require('../../models/sellerModel');
+const sellerWallet = require('../../models/sellerWallet');
+const withdrowRequest = require('../../models/withdrowRequest');
+const { mongo: { ObjectId } } = require('mongoose');
+const stripe = require('stripe')(process.env.STRIPE_SECRET_KEY);
+
+// ✅ Use environment variables exactly as defined in your .env
+const CUSTOMER_URL =
+  process.env.MODE === 'pro'
+    ? process.env.client_customer_production_url
+    : 'http://localhost:3000';
+
+const ADMIN_URL =
+  process.env.MODE === 'pro'
+    ? process.env.client_admin_production_url
+    : 'http://localhost:3001';
+
+class paymentController {
+
+    // ✅ Create Stripe Connect Account
+    create_stripe_connect_account = async (req, res) => {
+        const { id } = req;
+        const uid = uuidv4();
+
+        try {
+            const stripeInfo = await stripeModel.findOne({ sellerId: id });
+
+            // Delete existing Stripe account if it exists
+            if (stripeInfo) {
+                try {
+                    await stripe.accounts.del(stripeInfo.stripeId);
+                } catch (err) {
+                    console.log('Stripe delete error:', err.message);
+                }
+                await stripeModel.deleteOne({ sellerId: id });
             }
 
-            await stripeModel.deleteOne({ sellerId: id })
-
-            // ✅ FIXED (capability added)
+            // Create a new Stripe Express account
             const account = await stripe.accounts.create({
                 type: 'express',
                 capabilities: {
                     transfers: { requested: true }
                 }
-            })
+            });
 
+            // Create onboarding link with correct production URLs
             const accountLink = await stripe.accountLinks.create({
                 account: account.id,
-                refresh_url: 'http://localhost:3001/refresh',
-                return_url:  `http://localhost:3001/success?activeCode=${uid}`,
+                refresh_url: `${ADMIN_URL}/refresh`,
+                return_url: `${ADMIN_URL}/success?activeCode=${uid}`,
                 type: 'account_onboarding'
-            })
+            });
 
+            // Save Stripe account details in the database
             await stripeModel.create({
                 sellerId: id,
                 stripeId: account.id,
                 code: uid
-            })
+            });
 
-            console.log(accountLink.url)
-            responseReturn(res,201,{url:accountLink.url })
+            responseReturn(res, 201, { url: accountLink.url });
 
-        } else {
-
-            // ✅ FIXED (IMPORTANT: capability also added here)
-            const account = await stripe.accounts.create({
-                type: 'express',
-                capabilities: {
-                    transfers: { requested: true }
-                }
-            })
-
-            const accountLink = await stripe.accountLinks.create({
-                account: account.id,
-                refresh_url: 'http://localhost:3001/refresh',
-                return_url:  `http://localhost:3001/success?activeCode=${uid}`,
-                type: 'account_onboarding'
-            })
-
-            await stripeModel.create({
-                sellerId: id,
-                stripeId: account.id,
-                code: uid
-            })
-            console.log(" url is " + account.url)
-            responseReturn(res,201,{url:accountLink.url })
+        } catch (error) {
+            console.log('Stripe connect account error:', error.message);
+            responseReturn(res, 500, { message: 'Stripe account creation failed' });
         }
-        
-    } catch (error) {
-        console.log('stripe connect account error ' + error.message)
-    }
-}
+    };
 
+    // ✅ Delete Stripe Account
+    delete_stripe_account = async (req, res) => {
+        const { id } = req;
 
-//end method
-
-delete_stripe_account = async (req, res) => {
-    const { id } = req
-
-    try {
-        const stripeInfo = await stripeModel.findOne({ sellerId: id })
-
-        if (!stripeInfo) {
-            return responseReturn(res, 404, { message: 'No Stripe account found' })
-        }
-
-        // 🔥 Try deleting from Stripe
         try {
-            await stripe.accounts.del(stripeInfo.stripeId)
-        } catch (err) {
-            console.log("Stripe delete error:", err.message)
+            const stripeInfo = await stripeModel.findOne({ sellerId: id });
+
+            if (!stripeInfo) {
+                return responseReturn(res, 404, { message: 'No Stripe account found' });
+            }
+
+            try {
+                await stripe.accounts.del(stripeInfo.stripeId);
+            } catch (err) {
+                console.log("Stripe delete error:", err.message);
+            }
+
+            await stripeModel.deleteOne({ sellerId: id });
+
+            await sellerModel.findByIdAndUpdate(id, {
+                payment: 'inactive'
+            });
+
+            return responseReturn(res, 200, {
+                message: 'Stripe account deleted successfully'
+            });
+
+        } catch (error) {
+            console.log("Delete error:", error.message);
+            return responseReturn(res, 500, {
+                message: 'Delete failed'
+            });
         }
+    };
 
-        // 🔥 Always delete from DB
-        await stripeModel.deleteOne({ sellerId: id })
+    // ✅ Activate Stripe Account
+    active_stripe_connect_account = async (req, res) => {
+        const { activeCode } = req.params;
+        const { id } = req;
 
-        await sellerModel.findByIdAndUpdate(id, {
-            payment: 'inactive'
-        })
-
-        return responseReturn(res, 200, {
-            message: 'Stripe account deleted successfully'
-        })
-
-    } catch (error) {
-        console.log("Delete error:", error.message)
-        return responseReturn(res, 500, {
-            message: 'Delete failed'
-        })
-    }
-}
-
-
-//end method
-
-     active_stripe_connect_account = async (req, res) => {
-       const {activeCode} = req.params 
-       const {id} = req
-
-       try {
-            const userStripeInfo = await stripeModel.findOne({ code: activeCode })
+        try {
+            const userStripeInfo = await stripeModel.findOne({ code: activeCode });
 
             if (userStripeInfo) {
-                await sellerModel.findByIdAndUpdate(id,{  
-                  payment: 'active'
-                })
-                responseReturn(res, 200, {message: 'payment Active'})
+                await sellerModel.findByIdAndUpdate(id, {
+                    payment: 'active'
+                });
+                responseReturn(res, 200, { message: 'Payment Active' });
             } else {
-                responseReturn(res, 404, {message: 'payment Active Fails'})
-            } 
+                responseReturn(res, 404, { message: 'Payment Activation Failed' });
+            }
 
-       } catch (error) {
-        responseReturn(res, 500, {message: 'Internal Server Error'})
-       } 
+        } catch (error) {
+            responseReturn(res, 500, { message: 'Internal Server Error' });
+        }
+    };
 
-    }
-      // End Method 
-
-
+    // ✅ Utility Function to Sum Amounts
     sumAmount = (data) => {
         let sum = 0;
         for (let i = 0; i < data.length; i++) {
-            sum = sum + data[i].amount;            
+            sum += data[i].amount;
         }
-        return sum
-    }  
+        return sum;
+    };
 
-
-    //end method
-
-
+    // ✅ Get Seller Payment Details
     get_seller_payment_details = async (req, res) => {
-    const {sellerId} = req.params
-    
-    try {
-        const payments = await sellerWallet.find({ sellerId }) 
-        
-    const pendingWithdrows = await withdrowRequest.find({
-            $and: [
-                {
-                    sellerId: {
-                        $eq: sellerId
-                    }
-                },
-                {
-                    status: {
-                        $eq: 'pending'
-                    }
-                }
-            ]
-        })
+        const { sellerId } = req.params;
 
-        const successWithdrows = await withdrowRequest.find({
-            $and: [
-                {
-                    sellerId: {
-                        $eq: sellerId
-                    }
-                },
-                {
-                    status: {
-                        $eq: 'success'
-                    }
-                }
-            ]
-        })
+        try {
+            const payments = await sellerWallet.find({ sellerId });
 
-        const pendingAmount = this.sumAmount(pendingWithdrows)
-        const withdrowAmount = this.sumAmount(successWithdrows)
-        const totalAmount = this.sumAmount(payments)
+            const pendingWithdrows = await withdrowRequest.find({
+                sellerId,
+                status: 'pending'
+            });
 
-        let availableAmount = 0;
+            const successWithdrows = await withdrowRequest.find({
+                sellerId,
+                status: 'success'
+            });
 
-       // console.log("payment method called")
+            const pendingAmount = this.sumAmount(pendingWithdrows);
+            const withdrowAmount = this.sumAmount(successWithdrows);
+            const totalAmount = this.sumAmount(payments);
 
-        if (totalAmount > 0) {
-            availableAmount = totalAmount - (pendingAmount + withdrowAmount)
+            let availableAmount = totalAmount - (pendingAmount + withdrowAmount);
+            if (availableAmount < 0) availableAmount = 0;
+
+            responseReturn(res, 200, {
+                totalAmount,
+                pendingAmount,
+                withdrowAmount,
+                availableAmount,
+                pendingWithdrows,
+                successWithdrows
+            });
+
+        } catch (error) {
+            console.log(error.message);
+            responseReturn(res, 500, { message: 'Internal Server Error' });
         }
+    };
 
-        responseReturn(res, 200,{
-            totalAmount,
-            pendingAmount,
-            withdrowAmount,
-            availableAmount,
-            pendingWithdrows,
-            successWithdrows 
-        })
-        
-    } catch (error) {
-        console.log(error.message)
-    } 
-
-    }
-    // End Method 
-
-
+    // ✅ Withdrawal Request
     withdrowal_request = async (req, res) => {
-        const {amount,sellerId} = req.body
+        const { amount, sellerId } = req.body;
 
         try {
             const withdrowal = await withdrowRequest.create({
                 sellerId,
                 amount: parseInt(amount)
-            })
-            responseReturn(res, 200,{ withdrowal, message: 'Withdrowal Request Send'})
+            });
+
+            responseReturn(res, 200, {
+                withdrowal,
+                message: 'Withdrawal Request Sent'
+            });
         } catch (error) {
-            responseReturn(res, 500,{ message: 'Internal Server Error'})
+            responseReturn(res, 500, { message: 'Internal Server Error' });
         }
-    }
-  // End Method 
+    };
 
-
-  get_payment_request = async (req, res) => {
-    try {
-        const withdrowalRequest = await withdrowRequest.find({ status: 'pending'})
-        responseReturn(res, 200, {withdrowalRequest })
-    } catch (error) {
-        responseReturn(res, 500,{ message: 'Internal Server Error'})
-    }
-  }
-    // End Method 
-
-    payment_request_confirm = async (req, res) => {
-        const {paymentId} = req.body 
+    // ✅ Get All Pending Withdrawal Requests
+    get_payment_request = async (req, res) => {
         try {
-            const payment = await withdrowRequest.findById(paymentId)
-            const {stripeId} = await stripeModel.findOne({
-                sellerId: new ObjectId(payment.sellerId)
-            })
-
-            // await stripe.transfers.create({
-            //     amount: payment.amount * 100,
-            //     currency: 'usd',
-            //     destination: stripeId
-            // })
-             
-            await withdrowRequest.findByIdAndUpdate(paymentId, {status: 'success'})
-            responseReturn(res, 200, {payment, message: 'Request Confirm Success'})
-
-        } catch (error) { 
-            console.log(error)
-            responseReturn(res, 500,{ message: 'Internal Server Error'})
+            const withdrowalRequest = await withdrowRequest.find({ status: 'pending' });
+            responseReturn(res, 200, { withdrowalRequest });
+        } catch (error) {
+            responseReturn(res, 500, { message: 'Internal Server Error' });
         }
-    }
-  // End Method
+    };
 
+    // ✅ Confirm Withdrawal Request
+    payment_request_confirm = async (req, res) => {
+        const { paymentId } = req.body;
 
+        try {
+            const payment = await withdrowRequest.findById(paymentId);
 
+            const stripeInfo = await stripeModel.findOne({
+                sellerId: new ObjectId(payment.sellerId)
+            });
+
+            // Optional: Uncomment if Stripe transfers are required
+            /*
+            await stripe.transfers.create({
+                amount: payment.amount * 100,
+                currency: 'usd',
+                destination: stripeInfo.stripeId
+            });
+            */
+
+            await withdrowRequest.findByIdAndUpdate(paymentId, {
+                status: 'success'
+            });
+
+            responseReturn(res, 200, {
+                payment,
+                message: 'Request Confirmed Successfully'
+            });
+
+        } catch (error) {
+            console.log(error);
+            responseReturn(res, 500, { message: 'Internal Server Error' });
+        }
+    };
 }
 
-
-module.exports = new paymentController()
-
-
-
+module.exports = new paymentController();
